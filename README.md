@@ -1,0 +1,2 @@
+# garagesale
+go run . migrate
