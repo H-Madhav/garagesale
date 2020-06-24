@@ -12,8 +12,5 @@ services:
     networks:
       - shared-network
     image: postgres:11.1-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
     ports:
-      - 5432:5432
+      - 5433:5432

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -98,11 +97,10 @@ func openDB() (*sqlx.DB, error) {
 	u := url.URL{
 		Scheme:   "postgresql",
 		User:     url.UserPassword("postgres", "postgres"),
-		Host:     "localhost",
+		Host:     "localhost:5433",
 		Path:     "postgres",
 		RawQuery: q.Encode(),
 	}
-	fmt.Println(u.String())
 
 	return sqlx.Open("postgres", u.String())
 }
