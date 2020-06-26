@@ -3,10 +3,14 @@
 # docker-compose stop
 # docker-compose down
 version: '3'
+
 networks:
   shared-network:
     driver: bridge
+
 services:
+
+  # This starts a local PostgreSQL DB.
   db:
     container_name: sales_db
     networks:
