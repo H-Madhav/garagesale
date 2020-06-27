@@ -13,13 +13,18 @@ import (
 	"github.com/ardanlabs/garagesale/cmd/sales-api/internal/handlers"
 	"github.com/ardanlabs/garagesale/internal/platform/conf"
 	"github.com/ardanlabs/garagesale/internal/platform/database"
+	"github.com/pkg/errors"
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
 
-	// =========================================================================
-	// Configuration
-
+// =========================================================================
+// Configuration
+func run() error {
 	var cfg struct {
 		Web struct {
 			Address         string        `conf:"default:localhost:8000"`
@@ -40,12 +45,12 @@ func main() {
 		if err == conf.ErrHelpWanted {
 			usage, err := conf.Usage("SALES", &cfg)
 			if err != nil {
-				log.Fatalf("error : generating config usage : %v", err)
+				return errors.Wrap(err, "generating config usage")
 			}
 			fmt.Println(usage)
-			return
+			return nil
 		}
-		log.Fatalf("error: parsing config: %s", err)
+		return errors.Wrap(err, "error: parsing config")
 	}
 
 	// =========================================================================
@@ -56,7 +61,7 @@ func main() {
 
 	out, err := conf.String(&cfg)
 	if err != nil {
-		log.Fatalf("error : generating config for output : %v", err)
+		return errors.Wrap(err, "generating config for output")
 	}
 	log.Printf("main : Config :\n%v\n", out)
 
@@ -71,7 +76,7 @@ func main() {
 		DisableTLS: cfg.DB.DisableTLS,
 	})
 	if err != nil {
-		log.Fatalf("error: connecting to db: %s", err)
+		return errors.Wrap(err, "connecting to db")
 	}
 	defer db.Close()
 
@@ -108,7 +113,7 @@ func main() {
 	// Blocking main and waiting for shutdown.
 	select {
 	case err := <-serverErrors:
-		log.Fatalf("error: starting server: %s", err)
+		return errors.Wrap(err, "starting server")
 
 	case <-shutdown:
 		log.Println("main : Start shutdown")
@@ -125,7 +130,8 @@ func main() {
 		}
 
 		if err != nil {
-			log.Fatalf("main : could not stop server gracefully : %v", err)
+			return errors.Wrap(err, "could not stop server gracefully")
 		}
 	}
+	return nil
 }
