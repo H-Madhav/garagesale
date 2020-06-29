@@ -25,6 +25,9 @@ func main() {
 // =========================================================================
 // Configuration
 func run() error {
+
+	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
 	var cfg struct {
 		Web struct {
 			Address         string        `conf:"default:localhost:8000"`
@@ -80,7 +83,7 @@ func run() error {
 	}
 	defer db.Close()
 
-	productsHandler := handlers.Products{DB: db}
+	productsHandler := handlers.Products{DB: db, Log: log}
 
 	// =========================================================================
 	// Start API Service
