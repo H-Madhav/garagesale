@@ -18,15 +18,20 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		log.Fatal(err)
+		log.Println("shutting down", "error:", err)
+		os.Exit(1)
 	}
 }
 
-// =========================================================================
-// Configuration
 func run() error {
 
+	// =========================================================================
+	// Logging
+
 	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
+	// =========================================================================
+	// Configuration
 
 	var cfg struct {
 		Web struct {
@@ -53,7 +58,7 @@ func run() error {
 			fmt.Println(usage)
 			return nil
 		}
-		return errors.Wrap(err, "error: parsing config")
+		return errors.Wrap(err, "parsing config")
 	}
 
 	// =========================================================================
@@ -83,14 +88,12 @@ func run() error {
 	}
 	defer db.Close()
 
-	productsHandler := handlers.Products{DB: db, Log: log}
-
 	// =========================================================================
 	// Start API Service
 
 	api := http.Server{
 		Addr:         cfg.Web.Address,
-		Handler:      http.HandlerFunc(productsHandler.List),
+		Handler:      handlers.API(db, log),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
@@ -136,5 +139,6 @@ func run() error {
 			return errors.Wrap(err, "could not stop server gracefully")
 		}
 	}
+
 	return nil
 }

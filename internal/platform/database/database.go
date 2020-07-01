@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq" // The database driver in use.
 )
 
-// Config for database
+// Config is the required properties to use the database.
 type Config struct {
 	User       string
 	Password   string
@@ -16,7 +16,7 @@ type Config struct {
 	DisableTLS bool
 }
 
-// Open knows how to open a database connection.
+// Open knows how to open a database connection based on the configuration.
 func Open(cfg Config) (*sqlx.DB, error) {
 	// Query parameters.
 	q := make(url.Values)

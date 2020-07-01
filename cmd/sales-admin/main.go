@@ -7,10 +7,6 @@ import (
 	"log"
 	"os"
 
-	"fmt"
-	"log"
-	"os"
-
 	"github.com/ardanlabs/garagesale/internal/platform/conf"
 	"github.com/ardanlabs/garagesale/internal/platform/database"
 	"github.com/ardanlabs/garagesale/internal/schema"
