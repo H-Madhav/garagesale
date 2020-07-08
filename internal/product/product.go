@@ -1,11 +1,18 @@
 package product
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
+)
+
+// ErrNotFound and ErrInvalidId are Predefined error for knon errors
+var (
+	ErrNotFound  = errors.New("Product not found")
+	ErrInvalidID = errors.New("invalid id")
 )
 
 // List gets all Products from the database.
@@ -23,11 +30,18 @@ func List(db *sqlx.DB) ([]Product, error) {
 
 // Retrieve finds the product identified by a given ID.
 func Retrieve(db *sqlx.DB, id string) (*Product, error) {
+
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, ErrInvalidID
+	}
 	var p Product
 
 	const q = `SELECT * FROM products WHERE product_id = $1`
 
 	if err := db.Get(&p, q, id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
 		return nil, errors.Wrap(err, "selecting single product")
 	}
 

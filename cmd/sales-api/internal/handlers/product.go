@@ -9,6 +9,7 @@ import (
 	"github.com/ardanlabs/garagesale/internal/product"
 	"github.com/go-chi/chi"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 // Products defines all of the handlers related to products. It holds the
@@ -20,60 +21,47 @@ type Products struct {
 
 // List gets all products from the service layer and encodes them for the
 // client response.
-func (p *Products) List(w http.ResponseWriter, r *http.Request) {
+func (p *Products) List(w http.ResponseWriter, r *http.Request) error {
 	list, err := product.List(p.db)
 	if err != nil {
-		p.log.Println("listing products", "error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	if err := web.Respond(w, list, http.StatusOK); err != nil {
-		p.log.Println("encoding response", "error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	return web.Respond(w, list, http.StatusOK)
 
 }
 
 // Retrieve finds a single product identified by an ID in the request URL.
-func (p *Products) Retrieve(w http.ResponseWriter, r *http.Request) {
+func (p *Products) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
 	prod, err := product.Retrieve(p.db, id)
 	if err != nil {
-		p.log.Println("getting product", "error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		switch err {
+		case product.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		case product.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		default:
+			return errors.Wrapf(err, "looking for product %q", id)
+		}
 	}
 
-	if err := web.Respond(w, prod, http.StatusOK); err != nil {
-		p.log.Println("encoding response", "error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	return web.Respond(w, prod, http.StatusOK)
 }
 
 // Create decodes the body of a request to create a new product. The full
 // product with generated fields is sent back in the response.
-func (p *Products) Create(w http.ResponseWriter, r *http.Request) {
+func (p *Products) Create(w http.ResponseWriter, r *http.Request) error {
 	var np product.NewProduct
 	if err := web.Decode(r, &np); err != nil {
-		p.log.Println("decoding product", "error", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
+		return err
 	}
 
 	prod, err := product.Create(p.db, np, time.Now())
 	if err != nil {
-		p.log.Println("creating product error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
-	if err := web.Respond(w, prod, http.StatusCreated); err != nil {
-		p.log.Println("encoding response", "error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	return web.Respond(w, prod, http.StatusCreated)
 }
